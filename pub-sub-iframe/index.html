@@ -1,0 +1,43 @@
+<!--
+  ~ Copyright (c) 2022 PIXILAB Technologies AB, Sweden (http://pixilab.se). All Rights Reserved.
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+	<script type="module">
+		import PubSubWebBlock from "./PubSubWebBlock.js";
+
+		window.PIXILAB_BLOCKS = {};	// Globals go here
+
+		(function() {
+			const subValueTester = {
+				dataReceived(value) {
+					console.log("index got data", value);
+					if (value === 5)
+						pubSub.set("Realm.Main.variable.NumVar.value", 2);
+					else if (value === 10)
+						pubSub.add("Realm.Main.variable.NumVar.value", -1);
+				}
+			}
+
+			const pubSub = new PubSubWebBlock();
+			window.PIXILAB_BLOCKS.pubSub = pubSub;	// Make available also under our global
+			pubSub.subscribe("Realm.Main.variable.NumVar.value", subValueTester);
+
+			pubSub.subscribe("Local.parameter.Par1", {dataReceived: function(value) {
+				console.log("Local.parameter.Par1", value);
+			}});
+		})();
+	</script>
+</head>
+<body style="background-color: white;">
+	<div>
+		Hello, pub-sub-iframe!<br>
+		<button onclick="PIXILAB_BLOCKS.pubSub.set('Local.parameter.Par1', 7)">Par1=7</button>
+		<button onclick="PIXILAB_BLOCKS.pubSub.add('Local.parameter.Par1', 3)">Par1=+3</button>
+	</div>
+</body>
+</html>
