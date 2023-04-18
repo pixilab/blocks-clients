@@ -1,5 +1,8 @@
-<!--
-  ~ Copyright (c) 2022 PIXILAB Technologies AB, Sweden (http://pixilab.se). All Rights Reserved.
+<!-- Example web page using the Web Block Javascript API. This API
+	is appropriate if your web page is designed to be hosted inside a Web Block in Blocks.
+  	This piggybacks on the pub-sub behavior already provided by the host Blocks Spot.
+
+  Copyright (c) 2022 PIXILAB Technologies AB, Sweden (http://pixilab.se). All Rights Reserved.
   -->
 
 <!DOCTYPE html>
@@ -10,12 +13,34 @@
 	<script type="module">
 		import PubSubWebBlock from "./PubSubWebBlock.js";
 
-		window.PIXILAB_BLOCKS = {};	// Globals go here
+		window.PIXILAB_BLOCKS = {};	// Our globals can go here
 
-		(function() {
+		(function() {	// Scope our custom code
+
+			// Create our single host API connection
+			const pubSub = new PubSubWebBlock();
+
+			// Make available as a global to use from elsewhere
+			window.PIXILAB_BLOCKS.pubSub = pubSub;
+
+			// Object responsible for responding to the NumVar property below
 			const subValueTester = {
-				dataReceived(value) {
-					console.log("index got data", value);
+				dataReceived: function(value) {
+					console.log("NumVar changed to", value);
+
+					/*	Set or adjust a Blocks property in some specific cases,
+						mostly to demonstrate how the "set" and "add" functions
+						are used. Here, these actions are triggered by specific
+						values of NumVar, but you may of course use the "set"
+						and "add" functions from any context, such as a click
+						handler on your custom web page (as shown for the
+						"Local.parameter.Par1" used in the onclick handlers).
+
+						Note that you in this way can access any property in
+						your Blocks system using a dot-separated property
+						path as shown below. You're not limited to Realm
+						variables.
+					 */
 					if (value === 5)
 						pubSub.set("Realm.Main.variable.NumVar.value", 2);
 					else if (value === 10)
@@ -23,10 +48,16 @@
 				}
 			}
 
-			const pubSub = new PubSubWebBlock();
-			window.PIXILAB_BLOCKS.pubSub = pubSub;	// Make available also under our global
+			/*	Subscribe to specified Blocks property, calling the dataReceived
+				function in subValueTester object defined above ehen value changes.
+			 */
 			pubSub.subscribe("Realm.Main.variable.NumVar.value", subValueTester);
 
+			/**
+			 * Here we subscribe to a local Spot Parameter named Par1, which is
+			 * assumed to exist on the root block hosting the Web Block, and possibly
+			 * being exposed there in a Text block, so you can see its value.
+			 */
 			pubSub.subscribe("Local.parameter.Par1", {dataReceived: function(value) {
 				console.log("Local.parameter.Par1", value);
 			}});
